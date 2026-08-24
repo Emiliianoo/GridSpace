@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Toolbar from "./Toolbar";
 
 type Point = {
   x: number;
@@ -105,6 +106,18 @@ function Board() {
     currentStroke.current = { points: [] };
   }
 
+  function handleClear() {
+    const canvas = canvasRef.current;
+    if (!canvas || strokes.length === 0) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.beginPath();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -130,16 +143,12 @@ function Board() {
     redraw();
   }, [size]);
 
-  useEffect(() => {
-    console.log(strokes);
-    redraw();
-  }, [strokes]);
-
   return (
     <div
       ref={containerRef}
       className="fixed inset-0 flex items-center justify-center bg-black"
     >
+      <Toolbar onClear={handleClear} />
       <canvas
         ref={canvasRef}
         className="object-contain h-full w-full max-w-full max-h-full bg-white touch-none"
