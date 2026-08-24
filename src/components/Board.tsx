@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 
+type Point = {
+  x: number;
+  y: number;
+};
+
+type Stroke = {
+  points: Point[];
+};
+
 function Board() {
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+
+  const currentStroke = useRef<Stroke>({ points: [] });
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -13,10 +26,55 @@ function Board() {
   const lastX = useRef(0);
   const lastY = useRef(0);
 
+  function redraw() {
+    const canvas = canvasRef.current;
+    if (!canvas || strokes.length === 0) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.beginPath();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const stroke of strokes) {
+      if (stroke.points.length === 0) continue;
+
+      const firstPoint = stroke.points[0];
+
+      ctx.beginPath();
+      ctx.arc(firstPoint.x, firstPoint.y, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.moveTo(firstPoint.x, firstPoint.y);
+
+      for (let i = 1; i < stroke.points.length; i++) {
+        const point = stroke.points[i];
+
+        ctx.lineTo(point.x, point.y);
+      }
+
+      ctx.stroke();
+    }
+  }
+
   function handleMouseDown(e: React.PointerEvent<HTMLCanvasElement>) {
     isDrawing.current = true;
     lastX.current = e.nativeEvent.offsetX;
     lastY.current = e.nativeEvent.offsetY;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.beginPath();
+    ctx.arc(lastX.current, lastY.current, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    const currentPoint: Point = { x: lastX.current, y: lastY.current };
+    currentStroke.current.points.push(currentPoint);
   }
 
   function handleMouseMove(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -26,18 +84,25 @@ function Board() {
     const y = e.nativeEvent.offsetY;
 
     const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
 
-    ctx?.beginPath();
-    ctx?.moveTo(lastX.current, lastY.current);
-    ctx?.lineTo(x, y);
-    ctx?.stroke();
+    ctx.beginPath();
+    ctx.moveTo(lastX.current, lastY.current);
+    ctx.lineTo(x, y);
+    ctx.stroke();
 
     lastX.current = x;
     lastY.current = y;
+    const currentPoint: Point = { x: lastX.current, y: lastY.current };
+    currentStroke.current.points.push(currentPoint);
   }
 
   function handleMouseUp() {
     isDrawing.current = false;
+
+    setStrokes((prev) => [...prev, currentStroke.current]);
+
+    currentStroke.current = { points: [] };
   }
 
   useEffect(() => {
@@ -62,9 +127,13 @@ function Board() {
     canvas.width = size.width;
     canvas.height = size.height;
 
-    const ctx = canvas.getContext("2d");
-    ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    redraw();
   }, [size]);
+
+  useEffect(() => {
+    console.log(strokes);
+    redraw();
+  }, [strokes]);
 
   return (
     <div
