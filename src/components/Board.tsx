@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Toolbar from "./Toolbar";
+import { type ColorResult } from "react-color";
 
 type Point = {
   x: number;
@@ -8,12 +9,14 @@ type Point = {
 
 type Stroke = {
   points: Point[];
+  color: string;
 };
 
 function Board() {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [color, setColor] = useState<string>("#000000");
 
-  const currentStroke = useRef<Stroke>({ points: [] });
+  const currentStroke = useRef<Stroke>({ points: [], color });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -44,6 +47,8 @@ function Board() {
       const firstPoint = stroke.points[0];
 
       ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
       ctx.arc(firstPoint.x, firstPoint.y, 0.5, 0, Math.PI * 2);
       ctx.fill();
 
@@ -71,6 +76,8 @@ function Board() {
     if (!ctx) return;
 
     ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
     ctx.arc(lastX.current, lastY.current, 0.5, 0, Math.PI * 2);
     ctx.fill();
 
@@ -88,6 +95,7 @@ function Board() {
     if (!ctx) return;
 
     ctx.beginPath();
+    ctx.strokeStyle = color;
     ctx.moveTo(lastX.current, lastY.current);
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -103,7 +111,12 @@ function Board() {
 
     setStrokes((prev) => [...prev, currentStroke.current]);
 
-    currentStroke.current = { points: [] };
+    currentStroke.current = { points: [], color };
+  }
+
+  function handleChangeColor(newColor: ColorResult) {
+    const hex = newColor.hex;
+    setColor(hex);
   }
 
   function handleClear() {
@@ -116,6 +129,8 @@ function Board() {
     ctx.beginPath();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    setStrokes(() => []);
   }
 
   useEffect(() => {
@@ -148,7 +163,11 @@ function Board() {
       ref={containerRef}
       className="fixed inset-0 flex items-center justify-center bg-black"
     >
-      <Toolbar onClear={handleClear} />
+      <Toolbar
+        onClear={handleClear}
+        color={color}
+        onChangeColor={handleChangeColor}
+      />
       <canvas
         ref={canvasRef}
         className="object-contain h-full w-full max-w-full max-h-full bg-white touch-none"
