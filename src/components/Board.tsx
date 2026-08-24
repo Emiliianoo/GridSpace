@@ -15,6 +15,7 @@ type Stroke = {
 function Board() {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [color, setColor] = useState<string>("#000000");
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const currentStroke = useRef<Stroke>({ points: [], color });
 
@@ -65,6 +66,8 @@ function Board() {
   }
 
   function handleMouseDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    setShowColorPicker(false);
+
     isDrawing.current = true;
     lastX.current = e.nativeEvent.offsetX;
     lastY.current = e.nativeEvent.offsetY;
@@ -133,6 +136,10 @@ function Board() {
     setStrokes(() => []);
   }
 
+  function handleShowColorPicker() {
+    setShowColorPicker((visible) => !visible);
+  }
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -167,10 +174,12 @@ function Board() {
         onClear={handleClear}
         color={color}
         onChangeColor={handleChangeColor}
+        showColorPicker={showColorPicker}
+        onShowColorPicker={handleShowColorPicker}
       />
       <canvas
         ref={canvasRef}
-        className="object-contain h-full w-full max-w-full max-h-full bg-white touch-none"
+        className="select-none object-contain h-full w-full max-w-full max-h-full bg-white touch-none"
         onPointerDown={handleMouseDown}
         onPointerMove={handleMouseMove}
         onPointerUp={handleMouseUp}
