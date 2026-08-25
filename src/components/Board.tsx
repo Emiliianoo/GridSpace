@@ -17,7 +17,9 @@ function Board() {
   const [color, setColor] = useState<string>("#000000");
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  const currentStroke = useRef<Stroke>({ points: [], color });
+  const redoStack = useRef<Stroke[]>([]);
+
+  const currentStroke = useRef<Stroke | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -33,12 +35,10 @@ function Board() {
 
   function redraw() {
     const canvas = canvasRef.current;
-    if (!canvas || strokes.length === 0) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    ctx.beginPath();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -48,8 +48,8 @@ function Board() {
       const firstPoint = stroke.points[0];
 
       ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
+      ctx.strokeStyle = stroke.color;
+      ctx.fillStyle = stroke.color;
       ctx.arc(firstPoint.x, firstPoint.y, 0.5, 0, Math.PI * 2);
       ctx.fill();
 
@@ -66,6 +66,7 @@ function Board() {
   }
 
   function handleMouseDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    redoStack.current = [];
     setShowColorPicker(false);
 
     isDrawing.current = true;
@@ -83,6 +84,11 @@ function Board() {
     ctx.fillStyle = color;
     ctx.arc(lastX.current, lastY.current, 0.5, 0, Math.PI * 2);
     ctx.fill();
+
+    currentStroke.current = {
+      points: [],
+      color: color,
+    };
 
     const currentPoint: Point = { x: lastX.current, y: lastY.current };
     currentStroke.current.points.push(currentPoint);
@@ -106,15 +112,22 @@ function Board() {
     lastX.current = x;
     lastY.current = y;
     const currentPoint: Point = { x: lastX.current, y: lastY.current };
+
+    if (!currentStroke.current) return;
+
     currentStroke.current.points.push(currentPoint);
   }
 
   function handleMouseUp() {
     isDrawing.current = false;
 
-    setStrokes((prev) => [...prev, currentStroke.current]);
+    if (!currentStroke.current) return;
 
-    currentStroke.current = { points: [], color };
+    const stroke = currentStroke.current;
+
+    setStrokes((prev) => [...prev, stroke]);
+
+    currentStroke.current = null;
   }
 
   function handleChangeColor(newColor: ColorResult) {
@@ -140,6 +153,32 @@ function Board() {
     setShowColorPicker((visible) => !visible);
   }
 
+  function handleUndo() {
+    if (isDrawing.current) return;
+
+    setStrokes((prev) => {
+      if (prev.length === 0) return prev;
+
+      const lastStroke = prev[prev.length - 1];
+
+      redoStack.current.push(lastStroke);
+
+      return prev.slice(0, -1);
+    });
+  }
+
+  function handleRedo() {
+    if (isDrawing.current) return;
+
+    setStrokes((prev) => {
+      const stroke = redoStack.current.pop();
+
+      if (!stroke) return prev;
+
+      return [...prev, stroke];
+    });
+  }
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -163,7 +202,7 @@ function Board() {
     canvas.height = size.height;
 
     redraw();
-  }, [size]);
+  }, [size, strokes]);
 
   return (
     <div
@@ -176,6 +215,8 @@ function Board() {
         onChangeColor={handleChangeColor}
         showColorPicker={showColorPicker}
         onShowColorPicker={handleShowColorPicker}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
       />
       <canvas
         ref={canvasRef}
