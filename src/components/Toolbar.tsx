@@ -1,25 +1,31 @@
 import { SketchPicker, type ColorResult } from "react-color";
 import { FaRedo, FaUndo } from "react-icons/fa";
-import { FaRegTrashCan } from "react-icons/fa6";
+import { FaEraser, FaRegTrashCan } from "react-icons/fa6";
 import { IoIosColorPalette } from "react-icons/io";
 import { RiPencilFill } from "react-icons/ri";
 
+export type Tool = "pen" | "eraser";
+
 interface ToolbarProps {
+  selectedTool?: Tool;
   onClear?(): void;
   color?: string;
   onChangeColor?(result: ColorResult): void;
   showColorPicker?: boolean;
   onShowColorPicker?(): void;
+  onSelectTool?(tool: Tool): void;
   onUndo?(): void;
   onRedo?(): void;
 }
 
 function Toolbar({
+  selectedTool = "pen",
   onClear = () => {},
   color = "#000000",
   onChangeColor = () => {},
   showColorPicker = false,
   onShowColorPicker = () => {},
+  onSelectTool = () => {},
   onUndo = () => {},
   onRedo = () => {},
 }: ToolbarProps) {
@@ -48,9 +54,18 @@ function Toolbar({
 
       <button
         type="button"
-        className={`${iconButtonClass} bg-indigo-100 hover:bg-indigo-100 active:bg-indigo-100`}
+        onClick={() => onSelectTool("pen")}
+        className={`${iconButtonClass} ${selectedTool === "pen" ? "bg-indigo-100" : "bg-transparent"} hover:bg-indigo-100 active:bg-indigo-100`}
       >
         <RiPencilFill className="shrink-0 w-5 h-5 text-blue-950" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onSelectTool("eraser")}
+        className={`${iconButtonClass} ${selectedTool === "eraser" ? "bg-indigo-100" : "bg-transparent"} hover:bg-indigo-100 active:bg-indigo-100`}
+      >
+        <FaEraser className="shrink-0 w-5 h-5 text-blue-950" />
       </button>
 
       <button

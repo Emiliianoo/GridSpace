@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import Toolbar from "./Toolbar";
+import Toolbar, { type Tool } from "./Toolbar";
 import { type ColorResult } from "react-color";
 
 type Point = {
@@ -9,13 +9,17 @@ type Point = {
 
 type Stroke = {
   points: Point[];
-  color: string;
+  type: "pen" | "eraser";
+  color?: string;
+  width: number;
 };
 
 function Board() {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [type, setType] = useState<Tool>("pen");
   const [color, setColor] = useState<string>("#000000");
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [width, setWidth] = useState<number>(1);
+  const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
 
   const redoStack = useRef<Stroke[]>([]);
 
@@ -29,9 +33,9 @@ function Board() {
     height: 0,
   });
 
-  const isDrawing = useRef(false);
-  const lastX = useRef(0);
-  const lastY = useRef(0);
+  const isDrawing = useRef<boolean>(false);
+  const lastX = useRef<number>(0);
+  const lastY = useRef<number>(0);
 
   function redraw() {
     const canvas = canvasRef.current;
@@ -48,8 +52,19 @@ function Board() {
       const firstPoint = stroke.points[0];
 
       ctx.beginPath();
-      ctx.strokeStyle = stroke.color;
-      ctx.fillStyle = stroke.color;
+
+      if (stroke.type === "eraser") {
+        ctx.globalCompositeOperation = "destination-out";
+      } else {
+        ctx.globalCompositeOperation = "source-over";
+        if (stroke.color) ctx.strokeStyle = stroke.color;
+      }
+
+      if (stroke.color) {
+        ctx.strokeStyle = stroke.color;
+        ctx.fillStyle = stroke.color;
+      }
+
       ctx.arc(firstPoint.x, firstPoint.y, 0.5, 0, Math.PI * 2);
       ctx.fill();
 
@@ -80,6 +95,14 @@ function Board() {
     if (!ctx) return;
 
     ctx.beginPath();
+
+    if (type === "eraser") {
+      ctx.globalCompositeOperation = "destination-out";
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = color;
+    }
+
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.arc(lastX.current, lastY.current, 0.5, 0, Math.PI * 2);
@@ -87,7 +110,9 @@ function Board() {
 
     currentStroke.current = {
       points: [],
-      color: color,
+      type,
+      color: type != "eraser" ? color : undefined,
+      width,
     };
 
     const currentPoint: Point = { x: lastX.current, y: lastY.current };
@@ -102,6 +127,13 @@ function Board() {
 
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
+
+    if (type === "eraser") {
+      ctx.globalCompositeOperation = "destination-out";
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = color;
+    }
 
     ctx.beginPath();
     ctx.strokeStyle = color;
@@ -210,6 +242,8 @@ function Board() {
       className="fixed inset-0 flex items-center justify-center bg-black"
     >
       <Toolbar
+        selectedTool={type}
+        onSelectTool={setType}
         onClear={handleClear}
         color={color}
         onChangeColor={handleChangeColor}
