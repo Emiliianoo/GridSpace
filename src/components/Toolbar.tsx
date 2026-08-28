@@ -41,6 +41,10 @@ function Toolbar({
   const iconButtonClass =
     "w-8 h-8 flex items-center justify-center p-1 rounded-md cursor-pointer";
 
+  function handleWidthChange(nextWidth: number) {
+    onWidthChange(Math.min(20, Math.max(1, nextWidth)));
+  }
+
   return (
     <div className="select-none absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex max-w-[calc(100vw-1.5rem)] flex-row flex-wrap gap-1 border border-black/8 p-1 bg-white rounded-lg overflow-visible items-center justify-center sm:top-1/2 sm:bottom-auto sm:left-3 sm:translate-x-0 sm:-translate-y-1/2 sm:max-w-none sm:flex-nowrap sm:flex-col">
       <div className="flex flex-row gap-1 border-r-2 border-black/10 p-2 mr-2 sm:flex-col sm:border-r-0 sm:border-b-2 sm:mr-0 sm:mb-2">
@@ -112,13 +116,21 @@ function Toolbar({
       </button>
 
       {isWidthContainerOpen && (
-        <div className="absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 text-md sm:left-full sm:bottom-8 sm:ml-2 sm:translate-x-0 border border-black/8 p-1 bg-white rounded-lg">
+        <div className="absolute flex gap-1 bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 text-md sm:left-full sm:bottom-8 sm:ml-2 sm:translate-x-0 border border-black/8 p-1 bg-white rounded-lg">
           <input
             type="range"
             min={1}
             max={20}
             value={width}
-            onChange={(e) => onWidthChange(Number(e.target.value))}
+            onChange={(e) => handleWidthChange(Number(e.target.value))}
+          />
+          <input
+            type="number"
+            className="max-w-10"
+            min={1}
+            max={20}
+            value={width}
+            onChange={(e) => handleWidthChange(Number(e.target.value))}
           />
         </div>
       )}

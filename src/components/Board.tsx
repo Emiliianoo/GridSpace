@@ -70,7 +70,11 @@ function Board() {
         ctx.fillStyle = stroke.color;
       }
 
-      ctx.fill();
+      if (stroke.points.length === 1) {
+        ctx.arc(firstPoint.x, firstPoint.y, stroke.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
 
       ctx.moveTo(firstPoint.x, firstPoint.y);
 
