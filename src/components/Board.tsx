@@ -18,7 +18,7 @@ function Board() {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [type, setType] = useState<Tool>("pen");
   const [color, setColor] = useState<string>("#000000");
-  const [width, setWidth] = useState<number>(1);
+  const [width, setWidth] = useState<number>(5);
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
 
   const redoStack = useRef<Stroke[]>([]);
@@ -53,6 +53,11 @@ function Board() {
 
       ctx.beginPath();
 
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      ctx.lineWidth = stroke.width;
+
       if (stroke.type === "eraser") {
         ctx.globalCompositeOperation = "destination-out";
       } else {
@@ -65,7 +70,6 @@ function Board() {
         ctx.fillStyle = stroke.color;
       }
 
-      ctx.arc(firstPoint.x, firstPoint.y, 0.5, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.moveTo(firstPoint.x, firstPoint.y);
@@ -78,6 +82,8 @@ function Board() {
 
       ctx.stroke();
     }
+
+    ctx.globalCompositeOperation = "source-over";
   }
 
   function handleMouseDown(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -96,6 +102,11 @@ function Board() {
 
     ctx.beginPath();
 
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    ctx.lineWidth = width;
+
     if (type === "eraser") {
       ctx.globalCompositeOperation = "destination-out";
     } else {
@@ -105,7 +116,7 @@ function Board() {
 
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    ctx.arc(lastX.current, lastY.current, 0.5, 0, Math.PI * 2);
+    ctx.arc(lastX.current, lastY.current, width / 2, 0, Math.PI * 2);
     ctx.fill();
 
     currentStroke.current = {
@@ -249,6 +260,8 @@ function Board() {
         onChangeColor={handleChangeColor}
         showColorPicker={showColorPicker}
         onShowColorPicker={handleShowColorPicker}
+        width={width}
+        onWidthChange={setWidth}
         onUndo={handleUndo}
         onRedo={handleRedo}
       />
