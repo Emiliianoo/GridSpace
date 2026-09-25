@@ -41,6 +41,6 @@ npm run dev
 npm run build
 ```
 
-## Notes
+## Live Demo
 
-This app is intentionally designed to be simple, fast, and visually clean, making it a strong example of a polished front-end project that balances functionality with a professional appearance.
+Check out the live demo at: www.grid-space.emiliianoo.com
